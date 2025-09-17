@@ -13,6 +13,7 @@ clock = pygame.time.Clock()
 deltaTime = 0
 running = True
 
+playerImg = pygame.image.load('Assets/Player_placeholder.png')
 # IMG & SOUND SAVED
 # font = pygame.font.SysFont("Arial", 20)
 # text = font.render("Hello World!", False, (255, 255, 255))
@@ -58,7 +59,11 @@ class Game:
         # draw y lines
         for y in range(0, block_per_width):
             pygame.draw.line(screen, (255, 255, 255), (((SCREEN_WIDTH * SCALE_MODIFIER) / block_per_width) * y, 0), (((SCREEN_WIDTH * SCALE_MODIFIER) / block_per_width) * y, SCREEN_HEIGHT * SCALE_MODIFIER))
+    
+    def draw_player(self, playerPosX, playerPosY):
+        screen.blit(playerImg, (7 + (playerPosX * 64), (7 + (playerPosY * 64))))
 
+        
 game = Game()
 
 async def main():
@@ -70,7 +75,7 @@ async def main():
         screen.fill((0, 0, 0))
 
         game._debug_draw_grid(screen)
-
+        game.draw_player(5, 4) # Can now render player at any pos in the grid
         pygame.display.update()
 
         deltaTime = clock.tick(FPS) / 1000
