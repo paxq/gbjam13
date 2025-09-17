@@ -69,13 +69,50 @@ game = Game()
 async def main():
     global game, deltaTime, clock
 
+    PosX = 5
+    PosY = 5
+    Xvelocity = 0
+    Yvelocity = 0
+    grounded = False
+    game.draw_player(5, 5)
     while game.running:
         game.handle_pygame_events(pygame.event.get())
-
         screen.fill((0, 0, 0))
-
         game._debug_draw_grid(screen)
-        game.draw_player(5, 4) # Can now render player at any pos in the grid
+
+        # player:
+        if PosY == 8:
+            grounded = True
+       
+        Xvelocity /= 2
+        Yvelocity /= 2
+
+        key = pygame.key.get_pressed()
+
+        if key[pygame.K_LEFT] == True or key[pygame.K_a]:
+            if PosX > 0:
+                Xvelocity -= 0.1
+        if key[pygame.K_RIGHT] == True or key[pygame.K_d]:
+            if PosX < 9:
+                Xvelocity += 0.1
+        if key[pygame.K_UP] == True or key[pygame.K_w]:
+            if PosY > 0:
+                if grounded == True:
+                    Yvelocity -= 2
+                    grounded = False
+
+        PosY += 0.2
+        PosX += Xvelocity
+        PosY += Yvelocity
+        if PosY < 0:
+            PosY = 0
+        if PosY > 8:
+            PosY = 8  
+        if PosX < 0:
+            PosX = 0
+        if PosX > 9:
+            PosX = 9
+        game.draw_player(PosX, PosY)
         pygame.display.update()
 
         deltaTime = clock.tick(FPS) / 1000
