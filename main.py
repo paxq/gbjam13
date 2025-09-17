@@ -31,6 +31,73 @@ class WorldEvent:
         self.pos = location
         self.event = function
 
+class Player:
+    def __init__(self, x, y, scaleX=(16 * SCALE_MODIFIER), scaleY=(16 * SCALE_MODIFIER)):
+        self.x = x
+        self.y = y
+        self.width = scaleX
+        self.height = scaleY
+
+        self.speed = 7 * SCALE_MODIFIER
+        self.velocityX = 1
+        self.velocityY = 1
+        self.jump_height = self.height * 1.5
+        self.jump_multiplier = 0.99
+        self.initial_height = 0
+
+        self.gravity = 0.2
+        self.is_jumping = False
+        self.is_grounded = True
+
+    def move(self):
+        # dx = 0
+        # dy = 0
+
+        self.velocityX /= 2
+        self.velocityY /= 2
+
+        if self.y >= SCREEN_HEIGHT * SCALE_MODIFIER - self.height:
+            self.is_grounded = True
+        if self.initial_height - self.y >= self.jump_height:
+            self.is_jumping = False
+
+        # Get keypresses
+        key = pygame.key.get_pressed()
+        if key[pygame.K_w] or key[pygame.K_SPACE] or key[pygame.K_UP]:
+            if self.is_grounded:
+                self.initial_height = self.y
+                self.is_grounded = False
+                self.is_jumping = True
+            if self.initial_height - self.y < self.jump_height and self.is_jumping:
+                self.velocityY -= 0.4
+
+        if key[pygame.K_a] or key[pygame.K_LEFT]:
+            self.velocityX -= 0.1
+        if key[pygame.K_d] or key[pygame.K_RIGHT]:
+            self.velocityX += 0.1
+
+        self.velocityY += self.gravity
+
+        # Check for collisions
+        # (add world first)
+        if self.y - self.velocityY < 0:
+            self.velocityY += 0.1
+        if self.y + self.velocityY > SCREEN_HEIGHT * SCALE_MODIFIER - self.height:
+            self.velocityY -= 0.2
+        if self.x - self.velocityX < 0:
+            self.velocityX += 0.1
+        if self.x + self.velocityX > SCREEN_WIDTH * SCALE_MODIFIER - self.width:
+            self.velocityX -= 0.1
+
+        self.x += self.velocityX * self.speed
+        self.y += self.velocityY * self.speed
+
+    def draw(self, surface):
+        surface.blit(playerImg, (self.x, self.y, self.width, self.height))
+
+    def update(self, events):
+        pass
+
 class Game:
     def __init__(self):
         self.running = True
@@ -65,6 +132,7 @@ class Game:
 
         
 game = Game()
+player = Player(5, 5)
 
 async def main():
     global game, deltaTime, clock
@@ -74,45 +142,15 @@ async def main():
     Xvelocity = 0
     Yvelocity = 0
     grounded = False
-    game.draw_player(5, 5)
+
     while game.running:
         game.handle_pygame_events(pygame.event.get())
         screen.fill((0, 0, 0))
         game._debug_draw_grid(screen)
 
-        # player:
-        if PosY == 8:
-            grounded = True
-       
-        Xvelocity /= 2
-        Yvelocity /= 2
-
-        key = pygame.key.get_pressed()
-
-        if key[pygame.K_LEFT] == True or key[pygame.K_a]:
-            if PosX > 0:
-                Xvelocity -= 0.1
-        if key[pygame.K_RIGHT] == True or key[pygame.K_d]:
-            if PosX < 9:
-                Xvelocity += 0.1
-        if key[pygame.K_UP] == True or key[pygame.K_w]:
-            if PosY > 0:
-                if grounded == True:
-                    Yvelocity -= 2
-                    grounded = False
-
-        PosY += 0.2
-        PosX += Xvelocity
-        PosY += Yvelocity
-        if PosY < 0:
-            PosY = 0
-        if PosY > 8:
-            PosY = 8  
-        if PosX < 0:
-            PosX = 0
-        if PosX > 9:
-            PosX = 9
-        game.draw_player(PosX, PosY)
+        player.move()
+        player.draw(screen)
+        
         pygame.display.update()
 
         deltaTime = clock.tick(FPS) / 1000
