@@ -25,12 +25,45 @@ running = True
 # pygame.mixer.init()
 # sfx = pygame.mixer.Sound("sfx/step.wav")
 
+class GameObject:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+    
+    def move(self, x, y):
+        self.x += x
+        self.y += y
 
 class WorldEvent:
     def __init__(self, event_type, location, function):
         self.type = event_type
         self.pos = location
         self.event = function
+
+class World:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.debug_obj = []
+        self.backgrounds = []
+        self.tiles = []
+        self.interactions = []
+        self.entities = []
+
+    def move(self, x, y):
+        self.x += y
+        self.y += y
+
+        for obj in self.debug_obj:
+            obj.move(x, y)
+        for background in self.backgrounds:
+            background.move(x, y)
+        for tile in self.tiles:
+            tile.move(x, y)
+        for interaction in self.interactions:
+            interaction.move(x, y)
+        for entity in self.entites:
+            entity.move(x, y)
 
 class Player:
     def __init__(self, x, y):
@@ -156,10 +189,10 @@ class Camera:
                 worldX -= velocityX
 
             if centerY - 32 > 4:
-                print('move_up')
                 playerY += velocityY
             else:
                 worldY -= velocityY
+                print('move_up')
                 
         else:
             # Calculate Player movement
