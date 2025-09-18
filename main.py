@@ -2,6 +2,7 @@ import sys
 import pygame
 import asyncio
 import random
+import math
 from settings import *
 
 pygame.init()
@@ -43,10 +44,10 @@ class Player:
         self.velocityX = 0
         self.velocityY = 0
         self.jump_strength = 0.0925 # for some reason this acts like an exponential sacle but it works
+        self.better_jump_strength = self.jump_strength
         self.gravity = 0.032
         self.is_grounded = False
         self.jumping = 1
-        self.better_jump_strength = self.jump_strength
 
         self.playerImg = pygame.image.load('Assets/Player_placeholder.png')
         self.playerImg = pygame.transform.scale(self.playerImg, (self.width, self.height))
@@ -60,7 +61,6 @@ class Player:
 
         if self.y == 8: # will need to chage this to accept colidble blocks as valid is_grouded spaces
             self.is_grounded = True
-
 
         # Get keypresses
         key = pygame.key.get_pressed()
@@ -87,7 +87,6 @@ class Player:
         self.velocityY += self.gravity
 
         self.x += self.velocityX
-
         self.y += self.velocityY
 
         # Check for collisions
