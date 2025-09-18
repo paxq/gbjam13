@@ -4,6 +4,7 @@ import asyncio
 import random
 import math
 from settings import *
+from sprites import *
 
 pygame.init()
 pygame.display.set_caption("GBJam13 [insert name here]")
@@ -25,6 +26,8 @@ running = True
 # pygame.mixer.init()
 # sfx = pygame.mixer.Sound("sfx/step.wav")
 
+sprites = load_sprites()
+
 class GameObject:
     def __init__(self, x, y):
         self.x = x
@@ -33,6 +36,26 @@ class GameObject:
     def move(self, x, y):
         self.x += x
         self.y += y
+
+class Tile(GameObject):
+    def __init__(self, x, y, ID):
+        self.x = x # world units
+        self.y = y # world units
+        self.id = ID
+        self.rect = pygame.Rect(x, y, 16 * SCALE_MODIFIER, 16 * SCALE_MODIFIER) # pixel units
+
+        img = ""
+        for sprite in sprites:
+            if sprite['id'] == self.id:
+                img = sprite['img']
+
+        self.img = pygame.transform.scale(img, (self.rect.width, self.rect.height))
+
+        super().__init__(self.x, self.y)
+
+    def update(self):
+        self.rect.left = self.x * self.rect.width
+        self.rect.top = self.y * self.rect.height
 
 class WorldEvent:
     def __init__(self, event_type, location, function):
@@ -45,7 +68,7 @@ class World:
         self.x = 0
         self.y = 0
         self.backgrounds = []
-        self.tiles = []
+        self.tiles = [Tile(6, 8, 0)]
         self.interactions = []
         self.entities = []
 
@@ -55,15 +78,16 @@ class World:
 
         # for background in self.backgrounds:
         #     background.move(x, y)
-        # for tile in self.tiles:
-        #     tile.move(x, y)
+        for tile in self.tiles:
+            tile.move(x, y)
         # for interaction in self.interactions:
         #     interaction.move(x, y)
         # for entity in self.entities:
         #     entity.move(x, y)
 
     def draw(self, screen):
-        pass
+        for tile in self.tiles:
+            screen.blit(tile.img, tile.rect)
 
 class Player:
     def __init__(self, x, y):
@@ -204,8 +228,8 @@ class Camera:
         return {
                 'playerX' : playerX,
                 'playerY' : playerY,
-                'worldX' : worldX * player_collider.width,
-                'worldY' : worldY * player_collider.height
+                'worldX' : worldX,
+                'worldY' : worldY
                }
 
 class Game:
@@ -236,6 +260,8 @@ class Game:
     def update(self):
         # Update Order:
         # • Block events
+        for tile in self.world.tiles:
+            tile.update()
         # • Entities
         #   – Player
         player_info = self.player.move()
