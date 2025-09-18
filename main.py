@@ -86,29 +86,63 @@ class Player:
 
         self.velocityY += self.gravity
 
-        self.x += self.velocityX
-        self.y += self.velocityY
+        # self.x += self.velocityX
+        # self.y += self.velocityY
 
         # Check for collisions
         # (add world first)
-        if self.y < 0:
+        if self.y + self.velocityY < 0:
             self.y = 0
-        if self.y > 8:
-            self.y = 8
-        if self.x < 0:
+            self.velocityY = 0
+        if self.y + self.velocityY > 2:
+            self.y = 2
+            self.velocityY = 0
+        if self.x + self.velocityX < 0:
             self.x = 0
-        if self.x > 9:
-            self.x = 9
+            self.velocityX = 0
+        if self.x + self.velocityX > 2.25:
+            self.x = 2.25
+            self.velocityX = 0
 
+        return {
+                "x" : self.x,
+                "y" : self.y,
+                "velX" : self.velocityX,
+                "velY" : self.velocityY
+               }
 
-    def draw(self):
-        screen.blit(self.playerImg, ((self.x * 16 * SCALE_MODIFIER), ((self.y * 16 * SCALE_MODIFIER)), self.width, self.height))
+    def draw(self, surface):
+        surface.blit(self.playerImg, ((self.x * self.width * SCALE_MODIFIER), ((self.y * self.height * SCALE_MODIFIER)), self.width, self.height))
     #def update(self, events):
     #    pass
+
+class Camera:
+    def __init__(self):
+        self.padding = 32 * SCALE_MODIFIER#px
+        self.correctional_strength = 0.25
+
+    def calculate_movements(self, player_movement):
+        x = player_movement['x']
+        y = player_movement['y']
+        velocityX = player_movement['velX']
+        velocityY = player_movement['velY']
+
+        # Calculate Player movement
+        # Calculate World movement
+
+        return {
+                'playerX' : x + velocityX, 
+                'playerY' : y + velocityY,
+                'worldX' : 0,
+                'worldY' : 0,
+               }
 
 class Game:
     def __init__(self):
         self.running = True
+
+        self.player = Player(0, 0)
+        self.camera = Camera()
     
     def handle_pygame_events(self, events):
         # Handle game quit, gui interaction, and keyboard input
@@ -127,6 +161,38 @@ class Game:
         #         event.function()
         pass
 
+    def update(self):
+        pass
+        # Update Order:
+        # • Block events
+        # • Entities
+        #   – Player
+        player_movement = self.player.move()
+        #   – Passive Entities
+        #   – Enemies
+        # • Interactions
+        #   – Player interactions
+        #   – NPC interactions
+
+        # • Camera
+        movement = self.camera.calculate_movements(player_movement)
+        self.player.x = movement['playerX']
+        self.player.y = movement['playerY']
+
+        # print(self.player.x, self.player.y, self.player.velocityX, self.player.velocityY)
+
+
+    def draw(self, screen):
+        # Draw Order:
+        # • Background_1
+        # • Background_2
+        # • World Tiles
+        # • Interaction Tiles
+        # • Entities
+        # • Player
+        self.player.draw(screen)
+        # • Foreground_1
+
     def _debug_draw_grid(self, screen, block_per_width=10, block_per_height=9):
         # draw x lines
         for x in range(0, block_per_height):
@@ -142,19 +208,16 @@ player = Player(0, 8)
 async def main():
     global game, deltaTime, clock
 
-    #PosX = 5
-    #PosY = 5
-    #Xvelocity = 0
-    #Yvelocity = 0
-    #grounded = False
-
     while game.running:
+        # Update things
         game.handle_pygame_events(pygame.event.get())
-        screen.fill((0, 0, 0))
-        game._debug_draw_grid(screen)
+        game.update()
 
-        player.move()
-        player.draw()
+        # Draw things
+        screen.fill((0, 0, 0))
+    
+        game._debug_draw_grid(screen)
+        game.draw(screen)
         
         pygame.display.update()
 
