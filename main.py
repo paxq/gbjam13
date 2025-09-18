@@ -42,8 +42,8 @@ class Player:
         self.speed = 0.035
         self.velocityX = 0
         self.velocityY = 0
-        self.jump_strength = 0.125 # for some reason this acts like an exponential sacle but it works
-        self.gravity = 0.04
+        self.jump_strength = 0.0925 # for some reason this acts like an exponential sacle but it works
+        self.gravity = 0.032
         self.is_grounded = False
         self.jumping = 1
         self.better_jump_strength = self.jump_strength
@@ -71,7 +71,7 @@ class Player:
                 self.better_jump_strength = self.jump_strength
             if self.jumping > 0:
                 self.jumping += 0.4
-                self.better_jump_strength += 0.0009
+                self.better_jump_strength += 0.0010
             
         if key[pygame.K_a] or key[pygame.K_LEFT]:
             self.velocityX -= self.speed
@@ -138,7 +138,7 @@ class Game:
 
         
 game = Game()
-player = Player(5, 5)
+player = Player(0, 8)
 
 async def main():
     global game, deltaTime, clock
