@@ -44,7 +44,6 @@ class World:
     def __init__(self):
         self.x = 0
         self.y = 0
-        self.debug_obj = []
         self.backgrounds = []
         self.tiles = []
         self.interactions = []
@@ -54,16 +53,17 @@ class World:
         self.x += y
         self.y += y
 
-        for obj in self.debug_obj:
-            obj.move(x, y)
-        for background in self.backgrounds:
-            background.move(x, y)
-        for tile in self.tiles:
-            tile.move(x, y)
-        for interaction in self.interactions:
-            interaction.move(x, y)
-        for entity in self.entites:
-            entity.move(x, y)
+        # for background in self.backgrounds:
+        #     background.move(x, y)
+        # for tile in self.tiles:
+        #     tile.move(x, y)
+        # for interaction in self.interactions:
+        #     interaction.move(x, y)
+        # for entity in self.entities:
+        #     entity.move(x, y)
+
+    def draw(self, screen):
+        pass
 
 class Player:
     def __init__(self, x, y):
@@ -165,7 +165,7 @@ class Camera:
 
         self.camera_collider = pygame.Rect((SCREEN_WIDTH * SCALE_MODIFIER) / 2 - self.padding_horizontal / 2, (SCREEN_HEIGHT * SCALE_MODIFIER) - self.padding_vertical, self.padding_horizontal, self.padding_vertical)
 
-    def calculate_movements(self, player_info):
+    def calculate_movements(self, player_info, world_info):
         player_collider = player_info['collider']
         center = player_info['c_pos']
         centerX = center[0]
@@ -175,25 +175,27 @@ class Camera:
         velocityX = player_info['velX']
         velocityY = player_info['velY']
 
-        worldX = 0
-        worldY = 0
+        worldX = world_info.x
+        worldY = world_info.y
 
         # Calculate Movement
         if not self.camera_collider.colliderect(player_collider):
             # Calculate World movement
-            if centerX - 32 > 4: # center pos takes the 0-9 coorinate system and adds half the pixel width
-                print('right')
-                worldX -= velocityX
-            elif centerX - 32 < 4:
-                print('left')
-                worldX -= velocityX
-
-            if centerY - 32 > 4:
+            if centerX - player_collider.width / 2 > 4: # center pos takes the 0-9 coorinate system and adds half the pixel width
+                if velocityX > 0:
+                    worldX -= velocityX
+                elif velocityX < 0:
+                    playerX += velocityX
+            elif centerX - player_collider.width / 2 < 4:
+                if velocityX < 0:
+                    worldX -= velocityX
+                elif velocityX > 0:
+                    playerX += velocityX
+            
+            if centerY - player_collider.height / 2 > 4:
                 playerY += velocityY
             else:
                 worldY -= velocityY
-                print('move_up')
-                
         else:
             # Calculate Player movement
             playerX += velocityX
@@ -202,8 +204,8 @@ class Camera:
         return {
                 'playerX' : playerX,
                 'playerY' : playerY,
-                'worldX' : worldX,
-                'worldY' : worldY,
+                'worldX' : worldX * player_collider.width,
+                'worldY' : worldY * player_collider.height
                }
 
 class Game:
@@ -212,6 +214,7 @@ class Game:
 
         self.player = Player(4.5, 8)
         self.camera = Camera()
+        self.world = World()
     
     def handle_pygame_events(self, events):
         # Handle game quit, gui interaction, and keyboard input
@@ -243,9 +246,12 @@ class Game:
         #   – NPC interactions
 
         # • Camera
-        movement = self.camera.calculate_movements(player_info)
+        movement = self.camera.calculate_movements(player_info, self.world)
         self.player.x = movement['playerX']
         self.player.y = movement['playerY']
+
+        self.world.move(movement['worldX'], movement['worldY'])
+        # print(movement['worldX'], movement['worldY'])
 
         # print(self.player.x, self.player.y, self.player.velocityX, self.player.velocityY)
 
@@ -255,6 +261,8 @@ class Game:
         # • Background_1
         # • Background_2
         # • World Tiles
+        # • Debug Objects
+        self.world.draw(screen)
         # • Interaction Tiles
         # • Entities
         # • Player
@@ -284,14 +292,8 @@ async def main():
         # Draw things
         screen.fill((0, 0, 0))
 
-        pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider)
-        pygame.draw.rect(screen, (255, 0, 255), game.player.player_collider)
-
-        # if not game.camera.camera_collider.colliderect(game.player.player_collider):
-        #     if game.player.center_pos[0] - 32 > 4: # center pos takes the 0-9 coorinate system and adds half the pixel width
-        #         print('right')
-        #     elif game.player.center_pos[0] - 32 < 4:
-        #         print('left')
+        pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider) # Debug
+        pygame.draw.rect(screen, (255, 0, 255), game.player.player_collider) # Debug
 
         game._debug_draw_grid(screen)
         game.draw(screen)
