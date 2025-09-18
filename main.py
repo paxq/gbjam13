@@ -39,10 +39,10 @@ class Player:
         self.width = 16 * SCALE_MODIFIER
         self.height = 16 * SCALE_MODIFIER
 
-        self.speed = 0.2
+        self.speed = 0.1
         self.velocityX = 0
         self.velocityY = 0
-        self.jump_strength = 2 # for some reson this acts like an exponetal sacle but it works
+        self.jump_strength = 2 # for some reson this acts like an exponential sacle but it works
         self.gravity = 0.175
         self.is_grounded = False
         self.jumping = 1
