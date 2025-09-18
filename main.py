@@ -39,13 +39,14 @@ class Player:
         self.width = 16 * SCALE_MODIFIER
         self.height = 16 * SCALE_MODIFIER
 
-        self.speed = 0.1
+        self.speed = 0.035
         self.velocityX = 0
         self.velocityY = 0
-        self.jump_strength = 2 # for some reson this acts like an exponential sacle but it works
-        self.gravity = 0.175
+        self.jump_strength = 0.125 # for some reason this acts like an exponential sacle but it works
+        self.gravity = 0.04
         self.is_grounded = False
         self.jumping = 1
+        self.better_jump_strength = self.jump_strength
 
         self.playerImg = pygame.image.load('Assets/Player_placeholder.png')
         self.playerImg = pygame.transform.scale(self.playerImg, (self.width, self.height))
@@ -66,14 +67,20 @@ class Player:
         if key[pygame.K_w] or key[pygame.K_SPACE] or key[pygame.K_UP]:
             if self.is_grounded:
                 self.is_grounded = False
-                self.jumping = 5
+                self.jumping = 20
+                self.better_jump_strength = self.jump_strength
+            if self.jumping > 0:
+                self.jumping += 0.4
+                self.better_jump_strength += 0.0009
+            
         if key[pygame.K_a] or key[pygame.K_LEFT]:
             self.velocityX -= self.speed
         if key[pygame.K_d] or key[pygame.K_RIGHT]:
             self.velocityX += self.speed
 
         if self.jumping > 0:
-            self.velocityY -= self.jump_strength * 0.2
+            self.better_jump_strength *= 0.95
+            self.velocityY -= self.better_jump_strength
             self.jumping -= 1
 
 
