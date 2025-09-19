@@ -211,12 +211,13 @@ class Player:
 class Camera:
     def __init__(self):
         self.padding_horizontal = 48 * SCALE_MODIFIER
-        self.padding_vertical = 64 * SCALE_MODIFIER
+        self.padding_vertical = 32 * SCALE_MODIFIER
         self.correctional_strength = 0.1
 
         self.correctional_timer = 0
 
-        self.camera_collider = pygame.Rect((SCREEN_WIDTH * SCALE_MODIFIER) / 2 - self.padding_horizontal / 2, (SCREEN_HEIGHT * SCALE_MODIFIER) - self.padding_vertical, self.padding_horizontal, self.padding_vertical)
+        self.camera_collider_x = pygame.Rect((SCREEN_WIDTH * SCALE_MODIFIER) / 2 - self.padding_horizontal / 2, (SCREEN_HEIGHT * SCALE_MODIFIER) - TILE_SIZE * SCALE_MODIFIER, self.padding_horizontal, TILE_SIZE * SCALE_MODIFIER)
+        self.camera_collider_y = pygame.Rect((SCREEN_WIDTH * SCALE_MODIFIER) / 2 - (TILE_SIZE * SCALE_MODIFIER) / 2, (SCREEN_HEIGHT * SCALE_MODIFIER) - self.padding_vertical, TILE_SIZE * SCALE_MODIFIER, self.padding_vertical)
 
     def calculate_movements(self, player_info, world_info):
         player_trigger = player_info['collider']
@@ -230,55 +231,49 @@ class Camera:
 
         # Reset Padding zone
         if velocityX <= 0.03 and velocityX >= -0.03:
-            self.camera_collider.width = self.padding_horizontal
-            self.camera_collider.left = (SCREEN_WIDTH * SCALE_MODIFIER) / 2 - self.padding_horizontal / 2
+            self.camera_collider_x.width = self.padding_horizontal
+            self.camera_collider_x.left = (SCREEN_WIDTH * SCALE_MODIFIER) / 2 - self.padding_horizontal / 2
             self.correctional_timer = 0
 
-        # Calculate Movement
-        if self.camera_collider.colliderect(player_trigger):
-            # Calculate Player movement
-            playerX += velocityX
-            playerY += velocityY
+        # Move padding zone
+        self.camera_collider_x.bottom = player_trigger.bottom
+        self.camera_collider_y.right = player_trigger.right
 
-            return {
-                'playerX' : playerX,
-                'playerY' : playerY,
-                'worldX' : worldX,
-                'worldY' : worldY
-            }
-        
         # Shrink padding zone symmetrically
         if self.correctional_timer > 0:
             pr = -1/32 * (self.correctional_timer - 32) ** 2 + 32 # Smoothing function
 
-            self.camera_collider.width -= self.correctional_strength * pr
-            self.camera_collider.left += self.correctional_strength * pr / 2
-
+            self.camera_collider_x.width -= self.correctional_strength * pr
+            self.camera_collider_x.left += self.correctional_strength * pr / 2
         if self.correctional_timer < 64:
             self.correctional_timer += 1
 
-        # Move padding zone
-        if player_trigger.bottom < self.camera_collider.top:
-            self.camera_collider.top = player_trigger.top
-        elif player_trigger.top > self.camera_collider.bottom:
-            self.camera_collider.bottom = player_trigger.bottom
 
-        # # X-axis
-        if player_trigger.left > SCREEN_WIDTH * SCALE_MODIFIER / 2: #EDIT: FIXED.  center pos takes the 0-9 coorinate system and adds half the pixel width  ##Upon closer inspection the previous information is false. I don't know how it works or why, but it works, soo....
-            worldX -= velocityX
-            if self.correctional_timer > 0 and player_trigger.left > self.camera_collider.right:
-                playerX = self.camera_collider.right / player_trigger.width
-        elif player_trigger.right < SCREEN_WIDTH * SCALE_MODIFIER / 2:
-            worldX -= velocityX
-            if self.correctional_timer > 0 and player_trigger.right < self.camera_collider.left:    
-                playerX = (self.camera_collider.left - player_trigger.width) / player_trigger.width
-
+        # Calculate Movement
+        if self.camera_collider_x.colliderect(player_trigger):
+            # Calculate Player movement
+            playerX += velocityX
+        else:
+            # X-axis
+            if player_trigger.left > SCREEN_WIDTH * SCALE_MODIFIER / 2: #EDIT: FIXED.  center pos takes the 0-9 coorinate system and adds half the pixel width  ##Upon closer inspection the previous information is false. I don't know how it works or why, but it works, soo....
+                worldX -= velocityX
+                if self.correctional_timer > 0 and player_trigger.left > self.camera_collider_x.right:
+                    playerX = self.camera_collider_x.right / player_trigger.width
+            elif player_trigger.right < SCREEN_WIDTH * SCALE_MODIFIER / 2:
+                worldX -= velocityX
+                if self.correctional_timer > 0 and player_trigger.right < self.camera_collider_x.left:    
+                    playerX = (self.camera_collider_x.left - player_trigger.width) / player_trigger.width
+                
         # Y-Axis
-        if player_trigger.left > self.camera_collider.left and player_trigger.right < self.camera_collider.right:
-            worldY -= velocityY
+        worldY -= velocityY
+        if player_trigger.bottom <= self.camera_collider_y.top:
+            self.camera_collider_y.top = player_trigger.centery
+        elif player_trigger.top >= self.camera_collider_y.bottom:
+            self.camera_collider_y.bottom = player_trigger.centery
         else:
             playerY += velocityY
-                
+            worldY += velocityY # Cancel it out
+
         return {
             'playerX' : playerX,
             'playerY' : playerY,
@@ -372,7 +367,8 @@ async def main():
         # Draw things
         screen.fill((0, 0, 0))
 
-        pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider) # Debug
+        pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider_x) # Debug
+        pygame.draw.rect(screen, (0, 200, 100), game.camera.camera_collider_y) # Debug
         pygame.draw.rect(screen, (255, 0, 255), game.player.player_trigger) # Debug
 
         # game._debug_draw_grid(screen)
