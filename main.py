@@ -69,9 +69,36 @@ class World:
         self.x = 0
         self.y = 0
         self.backgrounds = []
-        self.tiles = [Tile(6, 8, 'A0'), Tile(7, 8, 'A0'), Tile(6, 7, 'A1', collidable=False), Tile(3, 6, 'A1')]
+        self.tiles = [] #Tile(6, 8, 'A0'), Tile(7, 8, 'A0'), Tile(6, 7, 'A1', collidable=False), Tile(3, 6, 'A0')
         self.interactions = []
         self.entities = []
+
+        # Load world info
+        with open('world.txt') as world_data:
+            data = world_data.read().replace('\n', '').split('NL')
+
+            world_size = data.pop(0)
+            worldX = int(world_size.split("x")[0])
+            worldY = int(world_size.split("x")[1])
+
+            start_pos = data.pop(0)
+            startX = float(start_pos.split("x")[0])
+            startY = float(start_pos.split("x")[1])
+
+            offsetX = worldX - startX
+            offsetY = worldY - startY
+
+            for column in range(0, len(data) - 1):
+                row = 0
+                while row < worldX * 2:
+                    ID = data[column][row] + data[column][row + 1]
+                    collision = True
+                    if ID == "00" or ID == "A1":
+                        collision = False
+
+                    tile = Tile(row / 2 + offsetX, column + offsetY, ID, collidable=collision)
+                    self.tiles.append(tile)
+                    row += 2
 
     def move(self, x, y):
         # for background in self.backgrounds:
@@ -115,9 +142,9 @@ class Player:
     def move(self, world):
         self.velocityX /= 2
         self.velocityY /= 1.4
-
-        if self.y == 8: # will need to chage this to accept colidble blocks as valid is_grouded spaces
-            self.is_grounded = True
+        
+        if self.velocityY > 0:
+            self.is_grounded = False
 
         # Get keypresses
         key = pygame.key.get_pressed()
@@ -159,10 +186,6 @@ class Player:
                 if self.velocityY < 0:
                     self.jumping = 0
                 self.velocityY = 0
-
-        if self.y + self.velocityY > 8:
-            self.y = 8
-            self.velocityY = 0
 
         self.update_vars()
 
@@ -267,7 +290,7 @@ class Game:
     def __init__(self):
         self.running = True
 
-        self.player = Player(4.5, 8)
+        self.player = Player(4.5, 7)
         self.camera = Camera()
         self.world = World()
     
@@ -352,7 +375,7 @@ async def main():
         pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider) # Debug
         pygame.draw.rect(screen, (255, 0, 255), game.player.player_trigger) # Debug
 
-        game._debug_draw_grid(screen)
+        # game._debug_draw_grid(screen)
         game.draw(screen)
         
         pygame.display.update()
