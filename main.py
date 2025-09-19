@@ -42,7 +42,7 @@ class Tile(GameObject):
         self.x = x # world units
         self.y = y # world units
         self.id = ID
-        self.rect = pygame.Rect(x, y, 16 * SCALE_MODIFIER, 16 * SCALE_MODIFIER) # pixel units
+        self.rect = pygame.Rect(x, y, TILE_SIZE * SCALE_MODIFIER, TILE_SIZE * SCALE_MODIFIER) # pixel units
 
         img = ""
         for sprite in sprites:
@@ -183,9 +183,11 @@ class Player:
 
 class Camera:
     def __init__(self):
-        self.padding_horizontal = 64 * SCALE_MODIFIER #px
+        self.padding_horizontal = 48 * SCALE_MODIFIER #px
         self.padding_vertical = 64 * SCALE_MODIFIER
-        self.correctional_strength = 0.25
+        self.correctional_strength = 2
+
+        self.correctional_timer = 0
 
         self.camera_collider = pygame.Rect((SCREEN_WIDTH * SCALE_MODIFIER) / 2 - self.padding_horizontal / 2, (SCREEN_HEIGHT * SCALE_MODIFIER) - self.padding_vertical, self.padding_horizontal, self.padding_vertical)
 
@@ -202,17 +204,35 @@ class Camera:
         worldX = world_info.x
         worldY = world_info.y
 
+        # Reset Padding zone
+        if velocityX <= 0.03 and velocityX >= -0.03:
+            self.camera_collider.width = self.padding_horizontal
+            self.camera_collider.left = (SCREEN_WIDTH * SCALE_MODIFIER) / 2 - self.padding_horizontal / 2
+
         # Calculate Movement
         if not self.camera_collider.colliderect(player_collider):
+            # Shrink padding zone symmetrically
+            if self.correctional_timer > 0 and self.camera_collider.width > TILE_SIZE * SCALE_MODIFIER:
+                self.camera_collider.width -= self.correctional_strength
+                self.camera_collider.left += self.correctional_strength / 2
+
             # Calculate World movement
             if centerX - player_collider.width / 2 > 4: # center pos takes the 0-9 coorinate system and adds half the pixel width
-                if velocityX > 0:
+                if self.correctional_timer > 0:
+                    playerX = self.camera_collider.right / player_collider.width
                     worldX -= velocityX
+                elif velocityX > 0:
+                    worldX -= velocityX
+                    self.correctional_timer += 1
                 elif velocityX < 0:
                     playerX += velocityX
             elif centerX - player_collider.width / 2 < 4:
-                if velocityX < 0:
+                if self.correctional_timer > 0:
+                    playerX = (self.camera_collider.left - player_collider.width) / player_collider.width
                     worldX -= velocityX
+                elif velocityX < 0:
+                    worldX -= velocityX
+                    self.correctional_timer += 1
                 elif velocityX > 0:
                     playerX += velocityX
             
@@ -222,8 +242,15 @@ class Camera:
                 worldY -= velocityY
         else:
             # Calculate Player movement
+            self.correctional_timer = 0
             playerX += velocityX
             playerY += velocityY
+
+
+        # playerX += velocityX / 2
+        # playerY += velocityY
+
+        # worldX -= velocityX / 2
 
         return {
                 'playerX' : playerX,
@@ -318,10 +345,10 @@ async def main():
         # Draw things
         screen.fill((0, 0, 0))
 
-        pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider) # Debug
-        pygame.draw.rect(screen, (255, 0, 255), game.player.player_collider) # Debug
+        # pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider) # Debug
+        # pygame.draw.rect(screen, (255, 0, 255), game.player.player_collider) # Debug
 
-        game._debug_draw_grid(screen)
+        # game._debug_draw_grid(screen)
         game.draw(screen)
         
         pygame.display.update()
