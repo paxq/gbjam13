@@ -74,8 +74,6 @@ class World:
         self.entities = []
 
     def move(self, x, y):
-        self.x += x
-        self.y += y
         # for background in self.backgrounds:
         #     background.move(x, y)
         for tile in self.tiles:
