@@ -38,11 +38,12 @@ class GameObject:
         self.y += y
 
 class Tile(GameObject):
-    def __init__(self, x, y, ID):
+    def __init__(self, x, y, ID, collidable=True):
         self.x = x # world units
         self.y = y # world units
         self.id = ID
         self.rect = pygame.Rect(x, y, TILE_SIZE * SCALE_MODIFIER, TILE_SIZE * SCALE_MODIFIER) # pixel units
+        self.collidable = collidable
 
         img = ""
         for sprite in sprites:
@@ -68,7 +69,7 @@ class World:
         self.x = 0
         self.y = 0
         self.backgrounds = []
-        self.tiles = [Tile(6, 8, 0)]
+        self.tiles = [Tile(6, 8, 0), Tile(7, 8, 0), Tile(6, 7, 1, collidable=False), Tile(3, 6, 0)]
         self.interactions = []
         self.entities = []
 
@@ -97,7 +98,9 @@ class Player:
         self.width = 16 * SCALE_MODIFIER
         self.height = 16 * SCALE_MODIFIER
 
-        self.center_pos = (self.x + self.width / 2, self.y + self.height / 2)
+        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+
+        self.center_pos = self.rect.center
         self.player_collider = pygame.Rect(((self.center_pos[0] - self.width / 2) * self.width), ((self.center_pos[1] - self.height / 2) * self.height), self.width, self.height)
 
         self.speed = 0.035
@@ -112,10 +115,7 @@ class Player:
         self.playerImg = pygame.image.load('Assets/Player_placeholder.png')
         self.playerImg = pygame.transform.scale(self.playerImg, (self.width, self.height))
 
-    def move(self):
-        # dx = 0
-        # dy = 0
-
+    def move(self, world):
         self.velocityX /= 2
         self.velocityY /= 1.4
 
@@ -150,20 +150,36 @@ class Player:
 
         # Check for collisions
         # (add world first)
-        if self.y + self.velocityY < 0:
-            self.y = 0
-            self.velocityY = 0
+        for tile in world.tiles:
+            # Test x dir
+            test_rect = pygame.Rect((self.x + self.velocityX) * self.width, self.y * self.height, self.width, self.height)
+            if test_rect.colliderect(tile.rect) and tile.collidable:
+                self.velocityX = 0
+            # Test y dir
+            test_rect = pygame.Rect(self.x * self.width, (self.y + self.velocityY) * self.height, self.width, self.height)
+            if test_rect.colliderect(tile.rect) and tile.collidable:
+                # Reset is grounded
+                if self.velocityY > 0:
+                    self.is_grounded = True
+                self.velocityY = 0
+
+
+        # if self.y + self.velocityY < 0:
+        #     self.y = 0
+        #     self.velocityY = 0
         if self.y + self.velocityY > 8:
             self.y = 8
             self.velocityY = 0
-        if self.x + self.velocityX < 0:
-            self.x = 0
-            self.velocityX = 0
-        if self.x + self.velocityX > 9:
-            self.x = 9
-            self.velocityX = 0
+        # if self.x + self.velocityX < 0:
+        #     self.x = 0
+        #     self.velocityX = 0
+        # if self.x + self.velocityX > 9:
+        #     self.x = 9
+        #     self.velocityX = 0
 
         self.center_pos = ((self.x + self.width / 2), (self.y + self.height / 2))
+        self.rect.top = self.y
+        self.rect.left = self.x
         self.player_collider = pygame.Rect(((self.center_pos[0] - self.width / 2) * self.width), ((self.center_pos[1] - self.height / 2) * self.height), self.width, self.height)
 
         return {
@@ -294,7 +310,7 @@ class Game:
             tile.update()
         # • Entities
         #   – Player
-        player_info = self.player.move()
+        player_info = self.player.move(self.world)
         #   – Passive Entities
         #   – Enemies
         # • Interactions
@@ -348,10 +364,10 @@ async def main():
         # Draw things
         screen.fill((0, 0, 0))
 
-        # pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider) # Debug
-        # pygame.draw.rect(screen, (255, 0, 255), game.player.player_collider) # Debug
+        pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider) # Debug
+        pygame.draw.rect(screen, (255, 0, 255), game.player.player_collider) # Debug
 
-        # game._debug_draw_grid(screen)
+        game._debug_draw_grid(screen)
         game.draw(screen)
         
         pygame.display.update()
