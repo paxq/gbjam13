@@ -74,7 +74,7 @@ class World:
         self.entities = []
 
     def move(self, x, y):
-        self.x += y
+        self.x += x
         self.y += y
 
         # for background in self.backgrounds:
@@ -215,50 +215,56 @@ class Camera:
             self.correctional_timer = 0
 
         # Calculate Movement
-        if self.camera_collider.colliderect(player_trigger) or self.camera_collider.top > player_trigger.bottom:
+        if self.camera_collider.colliderect(player_trigger):
             # Calculate Player movement
             playerX += velocityX
             playerY += velocityY
-        else:
-            # Shrink padding zone symmetrically
-            if self.correctional_timer > 0:
-                pr = -1/32 * (self.correctional_timer - 32) ** 2 + 32 # Smoothing function
 
-                self.camera_collider.width -= self.correctional_strength * pr
-                self.camera_collider.left += self.correctional_strength * pr / 2
-
-            if self.correctional_timer < 64:
-                self.correctional_timer += 1
-
-            # X-axis
-            if player_trigger.left > SCREEN_WIDTH * SCALE_MODIFIER / 2: #EDIT: FIXED.  center pos takes the 0-9 coorinate system and adds half the pixel width  ##Upon closer inspection the previous information is false. I don't know how it works or why, but it works, soo....
-                if self.correctional_timer > 0:
-                    if player_trigger.left > self.camera_collider.right:
-                        playerX = self.camera_collider.right / player_trigger.width
-                    worldX -= velocityX
-                elif velocityX > 0:
-                    worldX -= velocityX
-                elif velocityX < 0:
-                    playerX += velocityX
-            elif player_trigger.right < SCREEN_WIDTH * SCALE_MODIFIER / 2:
-                if self.correctional_timer > 0:
-                    if player_trigger.right < self.camera_collider.left:
-                        playerX = (self.camera_collider.left - player_trigger.width) / player_trigger.width
-                    worldX -= velocityX
-                elif velocityX < 0:
-                    worldX -= velocityX
-                elif velocityX > 0:
-                    playerX += velocityX
-
-            # Y-axis
-            # worldY -= velocityY
-
-        return {
+            return {
                 'playerX' : playerX,
                 'playerY' : playerY,
                 'worldX' : worldX,
                 'worldY' : worldY
-               }
+            }
+        
+        # Shrink padding zone symmetrically
+        if self.correctional_timer > 0:
+            pr = -1/32 * (self.correctional_timer - 32) ** 2 + 32 # Smoothing function
+
+            self.camera_collider.width -= self.correctional_strength * pr
+            self.camera_collider.left += self.correctional_strength * pr / 2
+
+        if self.correctional_timer < 64:
+            self.correctional_timer += 1
+
+        # Move padding zone
+        if player_trigger.bottom < self.camera_collider.top:
+            self.camera_collider.top = player_trigger.top
+        elif player_trigger.top > self.camera_collider.bottom:
+            self.camera_collider.bottom = player_trigger.bottom
+
+        # # X-axis
+        if player_trigger.left > SCREEN_WIDTH * SCALE_MODIFIER / 2: #EDIT: FIXED.  center pos takes the 0-9 coorinate system and adds half the pixel width  ##Upon closer inspection the previous information is false. I don't know how it works or why, but it works, soo....
+            worldX -= velocityX
+            if self.correctional_timer > 0 and player_trigger.left > self.camera_collider.right:
+                playerX = self.camera_collider.right / player_trigger.width
+        elif player_trigger.right < SCREEN_WIDTH * SCALE_MODIFIER / 2:
+            worldX -= velocityX
+            if self.correctional_timer > 0 and player_trigger.right < self.camera_collider.left:    
+                playerX = (self.camera_collider.left - player_trigger.width) / player_trigger.width
+
+        # Y-Axis
+        if player_trigger.left > self.camera_collider.left and player_trigger.right < self.camera_collider.right:
+            worldY -= velocityY
+        else:
+            playerY += velocityY
+                
+        return {
+            'playerX' : playerX,
+            'playerY' : playerY,
+            'worldX' : worldX,
+            'worldY' : worldY
+            }
 
 class Game:
     def __init__(self):
