@@ -158,9 +158,12 @@ class Player:
             # Test y dir
             test_rect = pygame.Rect(self.x * self.width, (self.y + self.velocityY) * self.height, self.width, self.height)
             if test_rect.colliderect(tile.rect) and tile.collidable:
-                # Reset is grounded
+                # Reset is_grounded
                 if self.velocityY > 0:
                     self.is_grounded = True
+                # Reset velocity on headbang
+                if self.velocityY < 0:
+                    self.jumping = 0
                 self.velocityY = 0
 
 
