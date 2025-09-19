@@ -69,7 +69,7 @@ class World:
         self.x = 0
         self.y = 0
         self.backgrounds = []
-        self.tiles = [Tile(6, 8, 0), Tile(7, 8, 0), Tile(6, 7, 1, collidable=False), Tile(3, 6, 0)]
+        self.tiles = [Tile(6, 8, 'A0'), Tile(7, 8, 'A0'), Tile(6, 7, 'A1', collidable=False), Tile(3, 6, 'A1')]
         self.interactions = []
         self.entities = []
 
