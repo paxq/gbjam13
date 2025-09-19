@@ -186,6 +186,10 @@ class Player:
                 if self.velocityY < 0:
                     self.jumping = 0
                 self.velocityY = 0
+        
+        # quit game if u ded
+        if self.y > 16:
+            pygame.quit()
 
         self.update_vars()
 
