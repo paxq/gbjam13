@@ -185,7 +185,7 @@ class Camera:
     def __init__(self):
         self.padding_horizontal = 48 * SCALE_MODIFIER #px
         self.padding_vertical = 64 * SCALE_MODIFIER
-        self.correctional_strength = 2
+        self.correctional_strength = 0.1
 
         self.correctional_timer = 0
 
@@ -208,22 +208,27 @@ class Camera:
         if velocityX <= 0.03 and velocityX >= -0.03:
             self.camera_collider.width = self.padding_horizontal
             self.camera_collider.left = (SCREEN_WIDTH * SCALE_MODIFIER) / 2 - self.padding_horizontal / 2
+            self.correctional_timer = 0
 
         # Calculate Movement
         if not self.camera_collider.colliderect(player_collider):
             # Shrink padding zone symmetrically
-            if self.correctional_timer > 0 and self.camera_collider.width > TILE_SIZE * SCALE_MODIFIER:
-                self.camera_collider.width -= self.correctional_strength
-                self.camera_collider.left += self.correctional_strength / 2
+            if self.correctional_timer > 0 and self.camera_collider.width > (TILE_SIZE / 6) * SCALE_MODIFIER:
+                pr = -1/32 * (self.correctional_timer - 32) ** 2 + 32 # Smoothing function
+
+                self.camera_collider.width -= self.correctional_strength * pr
+                self.camera_collider.left += self.correctional_strength * pr / 2
 
             # Calculate World movement
+            self.correctional_timer += 1
+            if self.correctional_timer >= 64:
+                self.correctional_timer = 64
             if centerX - player_collider.width / 2 > 4: # center pos takes the 0-9 coorinate system and adds half the pixel width
                 if self.correctional_timer > 0:
                     playerX = self.camera_collider.right / player_collider.width
                     worldX -= velocityX
                 elif velocityX > 0:
                     worldX -= velocityX
-                    self.correctional_timer += 1
                 elif velocityX < 0:
                     playerX += velocityX
             elif centerX - player_collider.width / 2 < 4:
@@ -232,7 +237,6 @@ class Camera:
                     worldX -= velocityX
                 elif velocityX < 0:
                     worldX -= velocityX
-                    self.correctional_timer += 1
                 elif velocityX > 0:
                     playerX += velocityX
             
@@ -242,7 +246,6 @@ class Camera:
                 worldY -= velocityY
         else:
             # Calculate Player movement
-            self.correctional_timer = 0
             playerX += velocityX
             playerY += velocityY
 
