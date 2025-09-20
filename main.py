@@ -29,13 +29,18 @@ running = True
 sprites = load_sprites()
 
 class GameObject:
-    def __init__(self, x, y):
+    def __init__(self, x, y, rect):
         self.x = x
         self.y = y
+        self.rect = rect
     
     def move(self, x, y):
         self.x += x
         self.y += y
+
+    def update(self):
+        self.rect.left = self.x * self.rect.width
+        self.rect.top = self.y * self.rect.height
 
 class Tile(GameObject):
     def __init__(self, x, y, ID, collidable=True):
@@ -52,11 +57,38 @@ class Tile(GameObject):
 
         self.img = pygame.transform.scale(img, (self.rect.width, self.rect.height))
 
-        super().__init__(self.x, self.y)
+        super().__init__(self.x, self.y, self.rect)
 
-    def update(self):
-        self.rect.left = self.x * self.rect.width
-        self.rect.top = self.y * self.rect.height
+class Interaction(GameObject):
+    def __init__(self, x, y, w, h, sprite_id, interaction_radius=1, display_text='< interact >'):
+        self.x = x
+        self.y = y
+        self.id = sprite_id
+        self.rect = pygame.Rect(x, y, w * SCALE_MODIFIER, h * SCALE_MODIFIER)
+        self.text = display_text
+        self.text_width = 6 * SCALE_MODIFIER
+        self.text_height = 4 * SCALE_MODIFIER
+        self.displayed = False
+
+        img = ""
+        for sprite in sprites:
+            if sprite['id'] == self.id:
+                img = sprite['img']
+        self.img = pygame.transform.scale(img, (self.rect.width, self.rect.height))
+
+        super().__init__(self.x, self.y, self.rect)
+
+    def debug_render(self):
+        pygame.draw.rect(screen, (255, 0, 0), self.rect)
+
+    def check_for_interaction(self, player):
+        test_rect = player.rect
+        test_rect.x *= TILE_SIZE * SCALE_MODIFIER
+
+        test_rect.y *= TILE_SIZE * SCALE_MODIFIER
+        self.displayed = False
+        if self.rect.colliderect(test_rect):
+            self.displayed = True
 
 class WorldEvent:
     def __init__(self, event_type, location, function):
@@ -105,14 +137,19 @@ class World:
         #     background.move(x, y)
         for tile in self.tiles:
             tile.move(x, y)
-        # for interaction in self.interactions:
-        #     interaction.move(x, y)
+        for interaction in self.interactions:
+            interaction.move(x, y)
         # for entity in self.entities:
         #     entity.move(x, y)
 
     def draw(self, screen):
         for tile in self.tiles:
             screen.blit(tile.img, tile.rect)
+        for interaction in self.interactions:
+            screen.blit(interaction.img, interaction.rect)
+            if interaction.displayed:
+                text = game.font.render(interaction.text, False, (255, 255, 255))
+                screen.blit(text, (interaction.rect.left  - interaction.text_width, interaction.rect.top - interaction.text_height))
 
 class Player:
     def __init__(self, x, y):
@@ -189,7 +226,7 @@ class Player:
         
         # quit game if u ded
         if self.y > 16:
-            pygame.quit()
+            game.running = False
 
         self.update_vars()
 
@@ -292,6 +329,10 @@ class Game:
         self.player = Player(4.5, 7)
         self.camera = Camera()
         self.world = World()
+
+        pygame.font.init()
+        font = pygame.font.match_font('font/Grand9K Pixel.ttf', 0, 0)
+        self.font = pygame.font.Font(font, 8 * SCALE_MODIFIER)
     
     def handle_pygame_events(self, events):
         # Handle game quit, gui interaction, and keyboard input
@@ -321,6 +362,9 @@ class Game:
         #   – Passive Entities
         #   – Enemies
         # • Interactions
+        for interaction in self.world.interactions:
+            interaction.update()
+            interaction.check_for_interaction(self.player)
         #   – Player interactions
         #   – NPC interactions
 
@@ -373,7 +417,7 @@ async def main():
 
         pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider_x) # Debug
         pygame.draw.rect(screen, (0, 200, 100), game.camera.camera_collider_y) # Debug
-        pygame.draw.rect(screen, (255, 0, 255), game.player.player_trigger) # Debug
+        # pygame.draw.rect(screen, (255, 0, 255), game.player.player_trigger) # Debug
 
         # game._debug_draw_grid(screen)
         game.draw(screen)
