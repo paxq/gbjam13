@@ -315,9 +315,7 @@ class Animation:
         # walk left
         elif self.anim_type == -1:
             print(self.current_frame)
-            return self.walk_left_frames[self.current_frame]
-
-            
+            return self.walk_left_frames[self.current_frame]      
 
 class Player:
     def __init__(self, x, y):
