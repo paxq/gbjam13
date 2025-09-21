@@ -28,8 +28,27 @@ running = True
 
 world_keys = load_world_keys()
 
+class MenuItem:
+    def __init__(self, x, y, img, w=48, h=16):
+        self.width = w * SCALE_MODIFIER
+        self.height = h * SCALE_MODIFIER
+
+        self.rect = pygame.Rect(x, y, self.width, self.height)
+        self.img = pygame.transform.scale(pygame.image.load(img), (self.rect.width, self.rect.height))
+
+        self.selected = False
+        self.selected_overlay = pygame.transform.scale(pygame.image.load("img/menu/overlay.png"), (self.rect.width, self.rect.height))
+        self.parent = ""
+
+    def draw(self, surface):
+        if self.parent == "":
+            return
+        surface.blit(self.img, self.rect)
+        if self.selected:
+            surface.blit(self.selected_overlay, self.rect)
+
 class Menu:
-    def __init__(self, x, y, w, h, background_img):
+    def __init__(self, x, y, w, h, background_img, padding):
         self.x = x
         self.y = y
         self.width = w * SCALE_MODIFIER
@@ -39,20 +58,42 @@ class Menu:
         self.contents = []
         self.selected_item_index = 0
         self.input_cooldown = 0
+        self.item_padding = padding * SCALE_MODIFIER
 
         self.rect = pygame.Rect(x, y, w, h)
         self.img = pygame.transform.scale(pygame.image.load(background_img), (self.rect.width, self.rect.height))
 
+    def add_item(self, menu_item):
+        self.contents.append(menu_item)
+        menu_item.parent = self
+
+        # Figure out padding
+        menu_item.rect.left = self.x + self.item_padding
+        menu_item.rect.top = self.y + self.item_padding
+
+        for i in range(1, len(self.contents)):
+            x = self.item_padding
+            y = self.item_padding + self.contents[i - 1].height * i
+
+            menu_item.rect.left = self.x + x
+            menu_item.rect.top = self.y + y
+
+    def add_items(self, items):
+        for item in items:
+            self.add_item(item)
+
     def get_input(self):
         self.input_cooldown += 1
-        if self.input_cooldown > 15:
-            self.input_cooldown = 0
+        if self.input_cooldown > 30:
             key = pygame.key.get_pressed()
             if key[pygame.K_x]:
+                self.input_cooldown = 0
                 return -1
             if key[pygame.K_w] or key[pygame.K_UP] or key[pygame.K_SPACE]:
+                self.input_cooldown = 0
                 return 0
             if key[pygame.K_s] or key[pygame.K_DOWN]:
+                self.input_cooldown = 0
                 return 1
 
     def update(self):
@@ -70,14 +111,17 @@ class Menu:
         elif self.selected_item_index < 0:
             self.selected_item_index = len(self.contents) - 1
 
-        # print(self.selected_item_index)
+        for item in self.contents:
+            item.selected = False
+            if self.contents[self.selected_item_index] == item:
+                item.selected = True
 
     def draw(self, surface):
         if not self.active:
             return
         surface.blit(self.img, self.rect)
         for item in self.contents:
-            surface.blit(item.img, item.rect)
+            item.draw(surface)
 
 class GameObject:
     def __init__(self, x, y, rect):
@@ -403,7 +447,10 @@ class Game:
         self.camera = Camera()
         self.world = World()
 
-        self.menu_1 = Menu(4 * TILE_SIZE, 4 * TILE_SIZE, 64 * SCALE_MODIFIER, 64 * SCALE_MODIFIER, 'img/grass.png')
+        test_button = MenuItem(16, 16, "img/menu/text/text_placeholder.png")
+        test_button_2 = MenuItem(16, 16, "img/menu/button/button_placeholder.png")
+        self.menu_1 = Menu((SCREEN_WIDTH / 2) * SCALE_MODIFIER - 48 * SCALE_MODIFIER, (SCREEN_HEIGHT / 2) * SCALE_MODIFIER - 48 * SCALE_MODIFIER, 96 * SCALE_MODIFIER, 96 * SCALE_MODIFIER, 'img/menu/task_menu.png', 4)
+        self.menu_1.add_items([test_button, test_button_2])
 
         pygame.font.init()
         font = pygame.font.match_font('font/Grand9K Pixel.ttf', 0, 0)
@@ -492,8 +539,8 @@ async def main():
         # Draw things
         screen.fill((0, 0, 0))
 
-        pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider_x) # Debug
-        pygame.draw.rect(screen, (0, 200, 100), game.camera.camera_collider_y) # Debug
+        # pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider_x) # Debug
+        # pygame.draw.rect(screen, (0, 200, 100), game.camera.camera_collider_y) # Debug
         # pygame.draw.rect(screen, (255, 0, 255), game.player.player_trigger) # Debug
 
         # game._debug_draw_grid(screen)
