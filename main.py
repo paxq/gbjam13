@@ -268,6 +268,57 @@ class World:
                 text = game.font.render(interaction.text, False, (255, 255, 255))
                 screen.blit(text, (interaction.rect.left  - interaction.text_width, interaction.rect.top - interaction.text_height))
 
+class Animation:
+    def __init__(self, anim_type):
+        # load frames
+        self.idle_frames = [pygame.image.load('img/Player/idle/Frame6.png'), pygame.image.load('img/Player/idle/Frame7.png'), pygame.image.load('img/Player/idle/Frame8.png')]
+        self.walk_right_frames = [pygame.image.load('img/Player/walk/Frame0.png'), pygame.image.load('img/Player/walk/Frame1.png'), pygame.image.load('img/Player/walk/Frame2.png'), pygame.image.load('img/Player/walk/Frame3.png'), pygame.image.load('img/Player/walk/Frame4.png'), pygame.image.load('img/Player/walk/Frame5.png')]
+        self.walk_left_frames = []
+        for frame in self.walk_right_frames:
+            self.walk_left_frames.append(pygame.transform.flip(frame, True, False))
+
+        for i in range(0, 3):
+            self.idle_frames[i] = pygame.transform.scale(self.idle_frames[i], (TILE_SIZE * SCALE_MODIFIER, TILE_SIZE * SCALE_MODIFIER))
+        for i in range(0, 6):
+            self.walk_left_frames[i] = pygame.transform.scale(self.walk_left_frames[i], (TILE_SIZE * SCALE_MODIFIER, TILE_SIZE * SCALE_MODIFIER))
+            self.walk_right_frames[i] = pygame.transform.scale(self.walk_right_frames[i], (TILE_SIZE * SCALE_MODIFIER, TILE_SIZE * SCALE_MODIFIER))
+        
+        self.current_frame = 0
+        self.anim_type = anim_type
+        self.tick = 0
+
+        # self.frame0 = pygame.image.load('img/Player/walk/Frame0')
+        # self.frame1 = pygame.image.load('img/Player/walk/Frame1')
+        # self.frame2 = pygame.image.load('img/Player/walk/Frame2')
+        # self.frame3 = pygame.image.load('img/Player/walk/Frame3')
+        # self.frame4 = pygame.image.load('img/Player/walk/Frame4')
+        # self.frame5 = pygame.image.load('img/Player/walk/Frame5')
+
+    def animate_player(self):
+        self.tick += 1
+        if self.tick % 12 == 0:
+            self.current_frame += 1
+            self.tick = 0
+
+        if self.current_frame > 5:
+            self.current_frame = 0
+        # idle
+        if self.anim_type == 0:
+            if self.current_frame > 2:
+                self.current_frame = 0
+            print(self.current_frame)
+            return self.idle_frames[self.current_frame]
+        # walk right
+        elif self.anim_type == 1:
+            print(self.current_frame)
+            return self.walk_right_frames[self.current_frame]
+        # walk left
+        elif self.anim_type == -1:
+            print(self.current_frame)
+            return self.walk_left_frames[self.current_frame]
+
+            
+
 class Player:
     def __init__(self, x, y):
         self.x = x
@@ -292,6 +343,9 @@ class Player:
 
         self.playerImg = pygame.image.load('Assets/Player_placeholder.png')
         self.playerImg = pygame.transform.scale(self.playerImg, (self.width, self.height))
+        self.walk_right = Animation(1)
+        self.walk_left = Animation(-1)
+        self.idle = Animation(0)
 
     def move(self, world):
         self.velocityX /= 2
@@ -357,7 +411,13 @@ class Player:
                }
 
     def draw(self, surface):
-        surface.blit(self.playerImg, ((self.x * self.width), (self.y * self.height), self.width, self.height))
+        if self.velocityX > 0.05:
+            surface.blit(self.walk_right.animate_player(), ((self.x * self.width), (self.y * self.height), self.width, self.height))
+        elif self.velocityX < -0.05:
+            surface.blit(self.walk_left.animate_player(), ((self.x * self.width), (self.y * self.height), self.width, self.height))
+        else:
+            surface.blit(self.idle.animate_player(), ((self.x * self.width), (self.y * self.height), self.width, self.height))
+                    
 
     def update_vars(self):
         self.center_pos = ((self.x + self.width / 2), (self.y + self.height / 2))
