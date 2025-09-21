@@ -7,6 +7,10 @@ class Storage:
     def default_interaction(self, game):
         print("This code runs when you interact with an object.")
         print(f"Here is the player: {game.player.rect.center}\n")
+
+    def menu_1_interaction(self, game):
+        game.menu_1.active = True
+
 storage = Storage()
 
 def load_world_keys():
@@ -27,6 +31,6 @@ def load_world_keys():
             'id': 'I0',
             'img': pygame.image.load('img/grass_top.png'),
             'size': (16, 16),
-            'function': storage.default_interaction
+            'function': storage.menu_1_interaction
         }
     ]

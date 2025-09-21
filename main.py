@@ -28,6 +28,57 @@ running = True
 
 world_keys = load_world_keys()
 
+class Menu:
+    def __init__(self, x, y, w, h, background_img):
+        self.x = x
+        self.y = y
+        self.width = w * SCALE_MODIFIER
+        self.height = h * SCALE_MODIFIER
+
+        self.active = False
+        self.contents = []
+        self.selected_item_index = 0
+        self.input_cooldown = 0
+
+        self.rect = pygame.Rect(x, y, w, h)
+        self.img = pygame.transform.scale(pygame.image.load(background_img), (self.rect.width, self.rect.height))
+
+    def get_input(self):
+        self.input_cooldown += 1
+        if self.input_cooldown > 15:
+            self.input_cooldown = 0
+            key = pygame.key.get_pressed()
+            if key[pygame.K_x]:
+                return -1
+            if key[pygame.K_w] or key[pygame.K_UP] or key[pygame.K_SPACE]:
+                return 0
+            if key[pygame.K_s] or key[pygame.K_DOWN]:
+                return 1
+
+    def update(self):
+        nav_dir = self.get_input()
+        if nav_dir == -1:
+            self.active = False
+            return
+        if nav_dir == 0:
+            self.selected_item_index -= 1
+        if nav_dir == 1:
+            self.selected_item_index += 1
+
+        if self.selected_item_index > len(self.contents) - 1:
+            self.selected_item_index = 0
+        elif self.selected_item_index < 0:
+            self.selected_item_index = len(self.contents) - 1
+
+        # print(self.selected_item_index)
+
+    def draw(self, surface):
+        if not self.active:
+            return
+        surface.blit(self.img, self.rect)
+        for item in self.contents:
+            surface.blit(item.img, item.rect)
+
 class GameObject:
     def __init__(self, x, y, rect):
         self.x = x
@@ -78,7 +129,7 @@ class Interaction(GameObject):
         self.rect = pygame.Rect(x, y, self.width, self.height)
         self.img = pygame.transform.scale(img, (self.rect.width, self.rect.height))
         self.text = display_text
-        self.text_width = 6 * SCALE_MODIFIER
+        self.text_width = 8 * SCALE_MODIFIER
         self.text_height = 5 * SCALE_MODIFIER
         self.displayed = False
 
@@ -352,6 +403,8 @@ class Game:
         self.camera = Camera()
         self.world = World()
 
+        self.menu_1 = Menu(4 * TILE_SIZE, 4 * TILE_SIZE, 64 * SCALE_MODIFIER, 64 * SCALE_MODIFIER, 'img/grass.png')
+
         pygame.font.init()
         font = pygame.font.match_font('font/Grand9K Pixel.ttf', 0, 0)
         self.font = pygame.font.Font(font, 8 * SCALE_MODIFIER)
@@ -387,8 +440,8 @@ class Game:
         for interaction in self.world.interactions:
             interaction.update()
             interaction.check_for_collision(self.player)
-        #   – Player interactions
-        #   – NPC interactions
+        # • GUI
+        self.menu_1.update()
 
         # • Camera
         movement = self.camera.calculate_movements(player_info, self.world)
@@ -413,6 +466,8 @@ class Game:
         # • Player
         self.player.draw(screen)
         # • Foreground_1
+        # • GUI
+        self.menu_1.draw(screen)
 
     def _debug_draw_grid(self, screen, block_per_width=10, block_per_height=9):
         # draw x lines
