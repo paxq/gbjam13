@@ -4,7 +4,7 @@ import asyncio
 import random
 import math
 from settings import *
-from sprites import *
+from world_keys import *
 
 pygame.init()
 pygame.display.set_caption("GBJam13 [insert name here]")
@@ -26,7 +26,7 @@ running = True
 # pygame.mixer.init()
 # sfx = pygame.mixer.Sound("sfx/step.wav")
 
-sprites = load_sprites()
+world_keys = load_world_keys()
 
 class GameObject:
     def __init__(self, x, y, rect):
@@ -51,7 +51,7 @@ class Tile(GameObject):
         self.collidable = collidable
 
         img = ""
-        for sprite in sprites:
+        for sprite in world_keys:
             if sprite['id'] == self.id:
                 img = sprite['img']
 
@@ -60,35 +60,51 @@ class Tile(GameObject):
         super().__init__(self.x, self.y, self.rect)
 
 class Interaction(GameObject):
-    def __init__(self, x, y, w, h, sprite_id, interaction_radius=1, display_text='< interact >'):
+    def __init__(self, x, y, sprite_id, display_text='- INTERACT -'):
+        img = ""
+        for key in world_keys:
+            if key['id'] == sprite_id:
+                img = key['img']
+                w = key['size'][0] * SCALE_MODIFIER
+                h = key['size'][1] * SCALE_MODIFIER
+                func = key['function']
+
         self.x = x
         self.y = y
+        self.width = w
+        self.height = h
         self.id = sprite_id
-        self.rect = pygame.Rect(x, y, w * SCALE_MODIFIER, h * SCALE_MODIFIER)
+        self.function = func
+        self.rect = pygame.Rect(x, y, self.width, self.height)
+        self.img = pygame.transform.scale(img, (self.rect.width, self.rect.height))
         self.text = display_text
         self.text_width = 6 * SCALE_MODIFIER
-        self.text_height = 4 * SCALE_MODIFIER
+        self.text_height = 5 * SCALE_MODIFIER
         self.displayed = False
 
-        img = ""
-        for sprite in sprites:
-            if sprite['id'] == self.id:
-                img = sprite['img']
-        self.img = pygame.transform.scale(img, (self.rect.width, self.rect.height))
+        self.interaction_cooldown = 0
 
         super().__init__(self.x, self.y, self.rect)
 
     def debug_render(self):
         pygame.draw.rect(screen, (255, 0, 0), self.rect)
 
-    def check_for_interaction(self, player):
+    def check_for_interaction(self):
+        key = pygame.key.get_pressed()
+        if (key[pygame.K_s] or key[pygame.K_DOWN]) and self.interaction_cooldown > 30:
+            self.function(game)
+            self.interaction_cooldown = 0
+
+    def check_for_collision(self, player):
         test_rect = player.rect
         test_rect.x *= TILE_SIZE * SCALE_MODIFIER
 
         test_rect.y *= TILE_SIZE * SCALE_MODIFIER
         self.displayed = False
         if self.rect.colliderect(test_rect):
+            self.interaction_cooldown += 1
             self.displayed = True
+            self.check_for_interaction()
 
 class WorldEvent:
     def __init__(self, event_type, location, function):
@@ -101,7 +117,7 @@ class World:
         self.x = 0
         self.y = 0
         self.backgrounds = []
-        self.tiles = [] #Tile(6, 8, 'A0'), Tile(7, 8, 'A0'), Tile(6, 7, 'A1', collidable=False), Tile(3, 6, 'A0')
+        self.tiles = []
         self.interactions = []
         self.entities = []
 
@@ -124,12 +140,18 @@ class World:
                 row = 0
                 while row < worldX * 2:
                     ID = data[column][row] + data[column][row + 1]
-                    collision = True
-                    if ID == "00" or ID == "A1":
-                        collision = False
+                    if ID == "00":
+                        pass
+                    elif ID[0] == 'I':
+                        interaction = Interaction(row / 2 + offsetX, column + offsetY, ID)
+                        self.interactions.append(interaction)
+                    else:
+                        collision = True
+                        if ID[0] == "D":
+                            collision = False
+                        tile = Tile(row / 2 + offsetX, column + offsetY, ID, collidable=collision)
+                        self.tiles.append(tile)
 
-                    tile = Tile(row / 2 + offsetX, column + offsetY, ID, collidable=collision)
-                    self.tiles.append(tile)
                     row += 2
 
     def move(self, x, y):
@@ -364,7 +386,7 @@ class Game:
         # • Interactions
         for interaction in self.world.interactions:
             interaction.update()
-            interaction.check_for_interaction(self.player)
+            interaction.check_for_collision(self.player)
         #   – Player interactions
         #   – NPC interactions
 
