@@ -306,15 +306,12 @@ class Animation:
         if self.anim_type == 0:
             if self.current_frame > 2:
                 self.current_frame = 0
-            print(self.current_frame)
             return self.idle_frames[self.current_frame]
         # walk right
         elif self.anim_type == 1:
-            print(self.current_frame)
             return self.walk_right_frames[self.current_frame]
         # walk left
         elif self.anim_type == -1:
-            print(self.current_frame)
             return self.walk_left_frames[self.current_frame]      
 
 class Player:
@@ -459,7 +456,7 @@ class Camera:
         if self.correctional_timer > 0:
             pr = -1/32 * (self.correctional_timer - 32) ** 2 + 32 # Smoothing function
 
-            self.camera_collider_x.width -= self.correctional_strength * pr
+            self.camera_collider_x.width -= self.correctional_strength * pr / 2 # added /2 on this one now it works like the left side idk why
             self.camera_collider_x.left += self.correctional_strength * pr / 2
         if self.correctional_timer < 64:
             self.correctional_timer += 1
