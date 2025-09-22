@@ -485,10 +485,10 @@ class Game:
         self.camera = Camera()
         self.world = World()
 
-        test_button = MenuItem(16, 16, f"{img_dir}/menu/text/text_placeholder.png")
-        test_button_2 = MenuItem(16, 16, f"{img_dir}/menu/button/button_placeholder.png")
-        self.menu_1 = Menu((SCREEN_WIDTH / 2) * SCALE_MODIFIER - 48 * SCALE_MODIFIER, (SCREEN_HEIGHT / 2) * SCALE_MODIFIER - 48 * SCALE_MODIFIER, 96 * SCALE_MODIFIER, 96 * SCALE_MODIFIER, f'{img_dir}/menu/task_menu.png', 4)
-        self.menu_1.add_items([test_button, test_button_2])
+        resume_btn = MenuItem(16, 16, f"{img_dir}/menu/button/resume.png")
+        quit_btn = MenuItem(16, 16, f"{img_dir}/menu/button/quit.png")
+        self.menu_1 = Menu(0, 0, SCREEN_WIDTH * SCALE_MODIFIER, SCREEN_HEIGHT * SCALE_MODIFIER, f'{img_dir}/menu/task_menu.png', 48)
+        self.menu_1.add_items([resume_btn, quit_btn])
 
         pygame.font.init()
         font = pygame.font.match_font(f'{font_dir}/Grand9K Pixel.ttf', 0, 0)
