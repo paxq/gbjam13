@@ -10,7 +10,7 @@ from game_objects import *
 from world_keys import *
 
 pygame.init()
-pygame.display.set_caption("GBJam13 [insert name here]")
+pygame.display.set_caption("GBJam13 Robo Delivery")
 screen = pygame.display.set_mode((SCREEN_WIDTH * SCALE_MODIFIER, SCREEN_HEIGHT * SCALE_MODIFIER))
 aspect_ratio = 10 / 9
 
@@ -575,7 +575,7 @@ async def main():
         game.update()
 
         # Draw things
-        screen.fill((117, 251, 253))
+        screen.fill((91, 106, 179))
 
         # pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider_x) # Debug
         # pygame.draw.rect(screen, (0, 200, 100), game.camera.camera_collider_y) # Debug
