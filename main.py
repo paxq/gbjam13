@@ -65,7 +65,8 @@ class Menu:
         self.contents = []
         self.selected_item_index = 0
         self.input_cooldown = 0
-        self.item_padding = padding * SCALE_MODIFIER
+        self.item_padding_x = padding[0] * SCALE_MODIFIER
+        self.item_padding_y = padding[1] * SCALE_MODIFIER
 
         self.rect = pygame.Rect(x, y, w, h)
         self.img = pygame.transform.scale(pygame.image.load(background_img), (self.rect.width, self.rect.height))
@@ -75,12 +76,12 @@ class Menu:
         menu_item.parent = self
 
         # Figure out padding
-        menu_item.rect.left = self.x + self.item_padding
-        menu_item.rect.top = self.y + self.item_padding
+        menu_item.rect.left = self.x + self.item_padding_x
+        menu_item.rect.top = self.y + self.item_padding_y
 
         for i in range(1, len(self.contents)):
-            x = self.item_padding
-            y = self.item_padding + self.contents[i - 1].height * i
+            x = self.item_padding_x
+            y = self.item_padding_y + self.contents[i - 1].height * i
 
             menu_item.rect.left = self.x + x
             menu_item.rect.top = self.y + y
@@ -105,9 +106,11 @@ class Menu:
 
     def update(self):
         nav_dir = self.get_input()
-        if nav_dir == -1:
-            self.active = False
-            return
+        if nav_dir == -1 and self.active:
+            if self.selected_item_index == 0:
+                self.active = False
+            elif self.selected_item_index == 1:
+                game.running = False
         if nav_dir == 0:
             self.selected_item_index -= 1
         if nav_dir == 1:
@@ -333,6 +336,10 @@ class Player:
             game.world.interactions.append(interaction)
             # Remove Item from inventory
             self.held_item = ""
+        # Open Menu
+        if key[pygame.K_z] and self.input_delay > 30:
+            self.input_delay = 0
+            game.menu_1.active = not game.menu_1.active
         # Jump
         if key[pygame.K_w] or key[pygame.K_SPACE] or key[pygame.K_UP]:
             if self.is_grounded:
@@ -487,8 +494,11 @@ class Game:
 
         resume_btn = MenuItem(16, 16, f"{img_dir}/menu/button/resume.png")
         quit_btn = MenuItem(16, 16, f"{img_dir}/menu/button/quit.png")
-        self.menu_1 = Menu(0, 0, SCREEN_WIDTH * SCALE_MODIFIER, SCREEN_HEIGHT * SCALE_MODIFIER, f'{img_dir}/menu/task_menu.png', 48)
-        self.menu_1.add_items([resume_btn, quit_btn])
+        tasks = MenuItem(0, 0, f"{img_dir}/menu/text/tasks.png")
+        task_1 = MenuItem(0, 0, f"{img_dir}/menu/text/deliver.png")
+        task_2 = MenuItem(0, 0, f"{img_dir}/menu/text/boxes.png")
+        self.menu_1 = Menu(0, 0, SCREEN_WIDTH * SCALE_MODIFIER, SCREEN_HEIGHT * SCALE_MODIFIER, f'{img_dir}/menu/task_menu.png', (50, 32))
+        self.menu_1.add_items([resume_btn, quit_btn, tasks, task_1, task_2])
 
         pygame.font.init()
         font = pygame.font.match_font(f'{font_dir}/Grand9K Pixel.ttf', 0, 0)
