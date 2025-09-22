@@ -52,6 +52,14 @@ def load_world_keys():
             'img': pygame.image.load(f'{img_dir}/rock.png')
         },
         {
+            'id': 'D2',
+            'img': pygame.image.load(f'{img_dir}/doorA.png')
+        },
+        {
+        'id': 'D3',
+        'img': pygame.image.load(f'{img_dir}/doorB.png')
+        },
+        {
             'id': 'I0',
             'img': pygame.image.load(f'{img_dir}/box.png'),
             'size': (16, 16),

@@ -392,6 +392,8 @@ class Player:
                }
 
     def draw(self, surface):
+        if game.player.held_item:
+            screen.blit(self.held_item.img, ((self.x * self.width), (self.y * self.height) - (TILE_SIZE * SCALE_MODIFIER), self.width, self.height))
         surface.blit(self.playerImg, ((self.x * self.width), (self.y * self.height), self.width, self.height))
                     
 
