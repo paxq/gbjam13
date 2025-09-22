@@ -105,6 +105,7 @@ class Menu:
                 self.input_cooldown = 0
                 return 0
             if key[pygame.K_s] or key[pygame.K_DOWN]:
+                sfx_jump.play()
                 self.input_cooldown = 0
                 return 1
 
