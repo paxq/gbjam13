@@ -24,12 +24,20 @@ def load_world_keys():
             'img': pygame.image.load("img/grass.png")
         },
         {
+            'id': 'B1',
+            'img': pygame.image.load("img/gray_block.png")
+        },
+        {
             'id': 'D0',
             'img': pygame.image.load('img/grass_top.png')
         },
         {
+            'id': 'D1',
+            'img': pygame.image.load('img/rock.png')
+        },
+        {
             'id': 'I0',
-            'img': pygame.image.load('img/grass_top.png'),
+            'img': pygame.image.load('img/box.png'),
             'size': (16, 16),
             'function': storage.menu_1_interaction
         }
