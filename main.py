@@ -316,7 +316,7 @@ class Player:
         self.held_item = ""
         self.input_delay = 0
 
-        playerImg = pygame.image.load(f'{img_dir}/player/idle/Frame6.png')
+        playerImg = pygame.image.load(f'{img_dir}/robo_walk.png')
         self.playerImg = pygame.transform.scale(playerImg, (self.width, self.height))
 
         self.walk_right = Animation(f'{img_dir}/player/walk_right', self)
@@ -600,7 +600,7 @@ async def main():
         game.update()
 
         # Draw things
-        screen.fill((77, 161, 146))
+        screen.fill((91, 106, 179))
 
         # pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider_x) # Debug
         # pygame.draw.rect(screen, (0, 200, 100), game.camera.camera_collider_y) # Debug
