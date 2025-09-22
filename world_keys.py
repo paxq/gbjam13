@@ -1,15 +1,30 @@
 import pygame
+from game_objects import Item
 
 class Storage:
     def __init__(self):
         pass
 
-    def default_interaction(self, game):
+    def default_interaction(self, interaction, game):
         print("This code runs when you interact with an object.")
         print(f"Here is the player: {game.player.rect.center}\n")
 
-    def menu_1_interaction(self, game):
+    def menu_1_interaction(self, interaction, game):
         game.menu_1.active = True
+
+    def pick_up_box(self, interaction, game):
+        # Put box in players inventory/hands
+        img_id = "I0"
+        for key in load_world_keys():
+            if key['id'].split()[0] == "I":
+                if key['function'] == storage.pick_up_box:
+                    img_id = key['id']
+        item = Item(interaction.rect, interaction.img, img_id)
+        game.player.held_item = item
+        # Remove box from world
+        index = game.world.interactions.index(interaction)
+        game.world.interactions.pop(index)
+        # Display buttons to drop (handled in player script)
 
 storage = Storage()
 
@@ -39,6 +54,6 @@ def load_world_keys():
             'id': 'I0',
             'img': pygame.image.load('img/box.png'),
             'size': (16, 16),
-            'function': storage.menu_1_interaction
+            'function': storage.pick_up_box
         }
     ]

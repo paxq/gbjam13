@@ -5,6 +5,7 @@ import random
 import math
 import glob
 from settings import *
+from game_objects import *
 from world_keys import *
 
 pygame.init()
@@ -16,6 +17,7 @@ clock = pygame.time.Clock()
 deltaTime = 0
 running = True
 
+world_keys = load_world_keys()
 
 # IMG & SOUND SAVED
 # font = pygame.font.SysFont("Arial", 20)
@@ -27,7 +29,6 @@ running = True
 # pygame.mixer.init()
 # sfx = pygame.mixer.Sound("sfx/step.wav")
 
-world_keys = load_world_keys()
 
 class MenuItem:
     def __init__(self, x, y, img, w=48, h=16):
@@ -124,20 +125,6 @@ class Menu:
         for item in self.contents:
             item.draw(surface)
 
-class GameObject:
-    def __init__(self, x, y, rect):
-        self.x = x
-        self.y = y
-        self.rect = rect
-    
-    def move(self, x, y):
-        self.x += x
-        self.y += y
-
-    def update(self):
-        self.rect.left = self.x * self.rect.width
-        self.rect.top = self.y * self.rect.height
-
 class Tile(GameObject):
     def __init__(self, x, y, ID, collidable=True):
         self.x = x # world units
@@ -182,17 +169,14 @@ class Interaction(GameObject):
 
         super().__init__(self.x, self.y, self.rect)
 
-    def debug_render(self):
-        pygame.draw.rect(screen, (255, 0, 0), self.rect)
-
-    def check_for_interaction(self):
+    def check_for_interaction(self, game):
         key = pygame.key.get_pressed()
         if (key[pygame.K_s] or key[pygame.K_DOWN]) and self.interaction_cooldown > 30:
-            self.function(game)
+            self.function(self, game)
             self.interaction_cooldown = 0
 
-    def check_for_collision(self, player):
-        test_rect = player.rect
+    def check_for_collision(self, game):
+        test_rect = game.player.rect
         test_rect.x *= TILE_SIZE * SCALE_MODIFIER
 
         test_rect.y *= TILE_SIZE * SCALE_MODIFIER
@@ -200,13 +184,8 @@ class Interaction(GameObject):
         if self.rect.colliderect(test_rect):
             self.interaction_cooldown += 1
             self.displayed = True
-            self.check_for_interaction()
+            self.check_for_interaction(game)
 
-class WorldEvent:
-    def __init__(self, event_type, location, function):
-        self.type = event_type
-        self.pos = location
-        self.event = function
 
 class World:
     def __init__(self):
@@ -304,12 +283,10 @@ class Player:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-
         self.width = 16 * SCALE_MODIFIER
         self.height = 16 * SCALE_MODIFIER
 
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-
         self.center_pos = self.rect.center
         self.player_trigger = pygame.Rect(((self.center_pos[0] - self.width / 2) * self.width), ((self.center_pos[1] - self.height / 2) * self.height), self.width, self.height)
 
@@ -321,6 +298,9 @@ class Player:
         self.gravity = 0.032
         self.is_grounded = False
         self.jumping = 1
+
+        self.held_item = ""
+        self.input_delay = 0
 
         playerImg = pygame.image.load('Assets/Player_placeholder.png')
         self.playerImg = pygame.transform.scale(playerImg, (self.width, self.height))
@@ -338,6 +318,16 @@ class Player:
 
         # Get keypresses
         key = pygame.key.get_pressed()
+        self.input_delay += 1
+        # Drop Item
+        if key[pygame.K_x] and self.input_delay > 30 and self.held_item != "":
+            self.input_delay = 0
+            # Create new tile and add it to the world
+            interaction = Interaction(self.rect.left, self.rect.bottom - self.held_item.rect.height, self.held_item.id)
+            game.world.interactions.append(interaction)
+            # Remove Item from inventory
+            self.held_item = ""
+        # Jump
         if key[pygame.K_w] or key[pygame.K_SPACE] or key[pygame.K_UP]:
             if self.is_grounded:
                 self.is_grounded = False
@@ -346,7 +336,7 @@ class Player:
             if self.jumping > 0:
                 self.jumping += 0.4
                 self.better_jump_strength += 0.0010
-            
+        # Move X-Axis
         if key[pygame.K_a] or key[pygame.K_LEFT]:
             self.velocityX -= self.speed
             self.playerImg = self.walk_left.animate()
@@ -360,11 +350,10 @@ class Player:
             self.better_jump_strength *= 0.95
             self.velocityY -= self.better_jump_strength
             self.jumping -= 1
-
+        # Add Gravity
         self.velocityY += self.gravity
 
         # Check for collisions
-        # (add world first)
         for tile in world.tiles:
             # Test x dir
             test_rect = pygame.Rect((self.x + self.velocityX) * self.width, self.y * self.height, self.width, self.height)
@@ -527,7 +516,7 @@ class Game:
         # • Interactions
         for interaction in self.world.interactions:
             interaction.update()
-            interaction.check_for_collision(self.player)
+            interaction.check_for_collision(self)
         # • GUI
         self.menu_1.update()
 
