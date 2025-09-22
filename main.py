@@ -575,7 +575,7 @@ async def main():
         game.update()
 
         # Draw things
-        screen.fill((91, 106, 179))
+        screen.fill((77, 161, 146))
 
         # pygame.draw.rect(screen, (0, 255, 0), game.camera.camera_collider_x) # Debug
         # pygame.draw.rect(screen, (0, 200, 100), game.camera.camera_collider_y) # Debug
