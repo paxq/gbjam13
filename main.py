@@ -10,7 +10,7 @@ from game_objects import *
 from world_keys import *
 
 pygame.init()
-pygame.display.set_caption("GBJam13 Robo Delivery")
+pygame.display.set_caption("GBJam13: Robo Delivery Prototype")
 screen = pygame.display.set_mode((SCREEN_WIDTH * SCALE_MODIFIER, SCREEN_HEIGHT * SCALE_MODIFIER))
 aspect_ratio = 10 / 9
 
@@ -31,8 +31,11 @@ sound_dir = resource_path("sfx")
 # img = pygame.image.load("img/char_idle-1.png")
 # img = pygame.transform.scale(img, (64, 64))
 
-# pygame.mixer.init()
-# sfx = pygame.mixer.Sound("sfx/step.wav")
+pygame.mixer.init()
+sfx_jump = pygame.mixer.Sound(f"{sound_dir}/jump.wav")
+sfx_step = pygame.mixer.Sound(f"{sound_dir}/step-2.wav")
+sfx_grab = pygame.mixer.Sound(f"{sound_dir}/grab_item.wav")
+sfx_drop = pygame.mixer.Sound(f"{sound_dir}/drop_item.wav")
 
 
 class MenuItem:
@@ -96,6 +99,7 @@ class Menu:
             key = pygame.key.get_pressed()
             if key[pygame.K_x]:
                 self.input_cooldown = 0
+                sfx_drop.play()
                 return -1
             if key[pygame.K_w] or key[pygame.K_UP] or key[pygame.K_SPACE]:
                 self.input_cooldown = 0
@@ -318,6 +322,8 @@ class Player:
         self.walk_left = Animation(f'{img_dir}/player/walk_right', self, True)
         self.idle = Animation(f'{img_dir}/player/idle', self)
 
+        self.sfx_grab = sfx_grab
+
     def move(self, world):
         self.velocityX /= 2
         self.velocityY /= 1.4
@@ -336,6 +342,7 @@ class Player:
             game.world.interactions.append(interaction)
             # Remove Item from inventory
             self.held_item = ""
+            sfx_drop.play()
         # Open Menu
         if key[pygame.K_z] and self.input_delay > 30:
             self.input_delay = 0
@@ -346,6 +353,7 @@ class Player:
                 self.is_grounded = False
                 self.jumping = 20
                 self.better_jump_strength = self.jump_strength
+                sfx_jump.play()
             if self.jumping > 0:
                 self.jumping += 0.4
                 self.better_jump_strength += 0.0010
@@ -353,9 +361,15 @@ class Player:
         if key[pygame.K_a] or key[pygame.K_LEFT]:
             self.velocityX -= self.speed
             self.playerImg = self.walk_left.animate()
+            if self.input_delay > 20 and not self.jumping:
+                sfx_step.play()
+                self.input_delay = 0
         elif key[pygame.K_d] or key[pygame.K_RIGHT]:
             self.velocityX += self.speed
             self.playerImg = self.walk_right.animate()
+            if self.input_delay > 20 and not self.jumping:
+                sfx_step.play()
+                self.input_delay = 0
         elif self.velocityY == 0:
             self.playerImg = self.idle.animate()
 

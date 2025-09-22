@@ -22,6 +22,7 @@ class Storage:
                     img_id = key['id']
         item = Item(interaction.rect, interaction.img, img_id)
         game.player.held_item = item
+        game.player.sfx_grab.play()
         # Remove box from world
         index = game.world.interactions.index(interaction)
         game.world.interactions.pop(index)
