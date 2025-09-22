@@ -1,3 +1,4 @@
+import os
 import sys
 import pygame
 import asyncio
@@ -19,6 +20,10 @@ running = True
 
 world_keys = load_world_keys()
 
+# FOR PYINSTALLER
+img_dir = resource_path("img")
+sound_dir = resource_path("sfx")
+
 # IMG & SOUND SAVED
 # font = pygame.font.SysFont("Arial", 20)
 # text = font.render("Hello World!", False, (255, 255, 255))
@@ -39,7 +44,7 @@ class MenuItem:
         self.img = pygame.transform.scale(pygame.image.load(img), (self.rect.width, self.rect.height))
 
         self.selected = False
-        self.selected_overlay = pygame.transform.scale(pygame.image.load("img/menu/overlay.png"), (self.rect.width, self.rect.height))
+        self.selected_overlay = pygame.transform.scale(pygame.image.load(f"{img_dir}/menu/overlay.png"), (self.rect.width, self.rect.height))
         self.parent = ""
 
     def draw(self, surface):
@@ -197,7 +202,8 @@ class World:
         self.entities = []
 
         # Load world info
-        with open('world.txt') as world_data:
+        path = resource_path("levels")
+        with open(f"{path}/world.txt") as world_data:
             data = world_data.read().replace('\n', '').split('NL')
 
             world_size = data.pop(0)
@@ -302,12 +308,12 @@ class Player:
         self.held_item = ""
         self.input_delay = 0
 
-        playerImg = pygame.image.load('Assets/Player_placeholder.png')
+        playerImg = pygame.image.load(f'{img_dir}/player/idle/Frame6.png')
         self.playerImg = pygame.transform.scale(playerImg, (self.width, self.height))
 
-        self.walk_right = Animation('img/player/walk_right', self)
-        self.walk_left = Animation('img/player/walk_right', self, True)
-        self.idle = Animation('img/player/idle', self)
+        self.walk_right = Animation(f'{img_dir}/player/walk_right', self)
+        self.walk_left = Animation(f'{img_dir}/player/walk_right', self, True)
+        self.idle = Animation(f'{img_dir}/player/idle', self)
 
     def move(self, world):
         self.velocityX /= 2
@@ -477,13 +483,13 @@ class Game:
         self.camera = Camera()
         self.world = World()
 
-        test_button = MenuItem(16, 16, "img/menu/text/text_placeholder.png")
-        test_button_2 = MenuItem(16, 16, "img/menu/button/button_placeholder.png")
-        self.menu_1 = Menu((SCREEN_WIDTH / 2) * SCALE_MODIFIER - 48 * SCALE_MODIFIER, (SCREEN_HEIGHT / 2) * SCALE_MODIFIER - 48 * SCALE_MODIFIER, 96 * SCALE_MODIFIER, 96 * SCALE_MODIFIER, 'img/menu/task_menu.png', 4)
+        test_button = MenuItem(16, 16, f"{img_dir}/menu/text/text_placeholder.png")
+        test_button_2 = MenuItem(16, 16, f"{img_dir}/menu/button/button_placeholder.png")
+        self.menu_1 = Menu((SCREEN_WIDTH / 2) * SCALE_MODIFIER - 48 * SCALE_MODIFIER, (SCREEN_HEIGHT / 2) * SCALE_MODIFIER - 48 * SCALE_MODIFIER, 96 * SCALE_MODIFIER, 96 * SCALE_MODIFIER, f'{img_dir}/menu/task_menu.png', 4)
         self.menu_1.add_items([test_button, test_button_2])
 
         pygame.font.init()
-        font = pygame.font.match_font('font/Grand9K Pixel.ttf', 0, 0)
+        font = pygame.font.match_font(f'{font_dir}/Grand9K Pixel.ttf', 0, 0)
         self.font = pygame.font.Font(font, 8 * SCALE_MODIFIER)
     
     def handle_pygame_events(self, events):
